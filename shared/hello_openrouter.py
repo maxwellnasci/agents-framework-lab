@@ -89,14 +89,20 @@ try:
     print("✅ Resposta:")
     print(f"   {answer}\n")
 
-    # === TOKENS: separamos reasoning_tokens dos completion_tokens normais ===
-    reasoning_tokens = 0
+    # === TOKENS: breakdown de reasoning vs completion ===
+    # O OpenRouter reporta reasoning_tokens em completion_tokens_details.
+    # Para GLM-5.2, os tokens de raciocínio = total_tokens - prompt - completion.
+    # Exibimos só se houver raciocínio real (> 0).
+    raw_reasoning = 0
     if usage.completion_tokens_details:
-        reasoning_tokens = getattr(usage.completion_tokens_details, "reasoning_tokens", 0) or 0
+        raw_reasoning = getattr(usage.completion_tokens_details, "reasoning_tokens", 0) or 0
+    # Garante que não ultrapassa os completion_tokens (proteção contra campo errado)
+    reasoning_tokens = min(raw_reasoning, usage.completion_tokens)
 
     print(f"📊 Tokens — input: {usage.prompt_tokens} | output: {usage.completion_tokens} | total: {usage.total_tokens}")
-    if reasoning_tokens:
-        print(f"   └─ desses, {reasoning_tokens} tokens foram de raciocínio interno (não aparecem na resposta)")
+    if reasoning_tokens and reasoning_tokens < usage.completion_tokens:
+        visible_tokens = usage.completion_tokens - reasoning_tokens
+        print(f"   └─ raciocínio interno: {reasoning_tokens} tokens | resposta visível: {visible_tokens} tokens")
 
     # === 6. CUSTO REAL — lido diretamente do campo `cost` do OpenRouter ===
     # O OpenRouter retorna o custo exato em `usage.cost` (em USD).
