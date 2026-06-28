@@ -62,26 +62,53 @@ try:
         messages=[
             {"role": "user", "content": "Olá! Em uma frase, quem é você?"}
         ],
-        max_tokens=150,  # limita resposta pra não estourar conta em teste
+        # === ATENÇÃO: GLM-5.2 É UM MODELO DE RACIOCÍNIO ===
+        # Modelos de raciocínio (como GLM-5.2, DeepSeek-R1, o1) «pensam» em voz
+        # alta antes de responder. Esse «pensamento» fica no campo `reasoning` e
+        # consome tokens. Com max_tokens baixo demais, o modelo esgota o limite
+        # pensando e nunca chega a preencher o `content`. Por isso usamos 1024.
+        max_tokens=1024,
     )
 
-    # response.choices é uma lista (pode ter múltiplas respostas, mas
-    # por padrão tem só uma). [0] pega a primeira. .message.content
-    # é o texto que o modelo gerou.
-    answer = response.choices[0].message.content
+    message = response.choices[0].message
     usage = response.usage  # objeto com contagem de tokens
+
+    # === LEITURA DO CONTEÚDO — SUPORTE A MODELOS DE RACIOCÍNIO ===
+    # Modelos de raciocínio separam o «pensamento» (reasoning) da «resposta» (content).
+    # Se o content vier None, lemos o reasoning — que é o próprio raciocínio do modelo.
+    # reasoning_tokens indica quantos tokens foram usados só para «pensar».
+    answer = message.content
+    reasoning = getattr(message, "reasoning", None)  # campo extra do OpenRouter
+
+    if answer is None and reasoning:
+        # O modelo pensou mas não gerou content separado — exibimos o raciocínio.
+        answer = f"[raciocínio do modelo]:\n{reasoning}"
+    elif answer is None:
+        answer = "(sem resposta — verifique finish_reason)"
 
     print("✅ Resposta:")
     print(f"   {answer}\n")
-    print(f"📊 Tokens — input: {usage.prompt_tokens} | output: {usage.completion_tokens} | total: {usage.total_tokens}")
 
-    # === 6. ESTIMATIVA DE CUSTO (preço público GLM-5.2 no OpenRouter) ===
-    # Input: $1.40 por 1M tokens. Output: $4.40 por 1M tokens.
-    # Fórmula: (tokens * preço) / 1_000_000
-    cost_input = (usage.prompt_tokens * 1.40) / 1_000_000
-    cost_output = (usage.completion_tokens * 4.40) / 1_000_000
-    cost_total = cost_input + cost_output
-    print(f"💰 Custo estimado: ${cost_total:.6f} USD")
+    # === TOKENS: separamos reasoning_tokens dos completion_tokens normais ===
+    reasoning_tokens = 0
+    if usage.completion_tokens_details:
+        reasoning_tokens = getattr(usage.completion_tokens_details, "reasoning_tokens", 0) or 0
+
+    print(f"📊 Tokens — input: {usage.prompt_tokens} | output: {usage.completion_tokens} | total: {usage.total_tokens}")
+    if reasoning_tokens:
+        print(f"   └─ desses, {reasoning_tokens} tokens foram de raciocínio interno (não aparecem na resposta)")
+
+    # === 6. CUSTO REAL — lido diretamente do campo `cost` do OpenRouter ===
+    # O OpenRouter retorna o custo exato em `usage.cost` (em USD).
+    # Usamos esse valor quando disponível; caso contrário, calculamos manualmente.
+    real_cost = getattr(usage, "cost", None)
+    if real_cost is not None:
+        print(f"💰 Custo real (OpenRouter): ${real_cost:.6f} USD")
+    else:
+        # Fallback: preço público GLM-5.2 — Input $1.20/1M | Output $4.20/1M tokens
+        cost_input = (usage.prompt_tokens * 1.20) / 1_000_000
+        cost_output = (usage.completion_tokens * 4.20) / 1_000_000
+        print(f"💰 Custo estimado: ${cost_input + cost_output:.6f} USD")
 
 except Exception as e:
     # IMPORTANTE: imprimimos o TIPO do erro e a mensagem padrão, mas
