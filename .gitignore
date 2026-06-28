@@ -1,0 +1,41 @@
+# Variáveis de ambiente e credenciais
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*_secret*
+*.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs e dados privados
+*.log
+logs/
+data/private/
