@@ -134,4 +134,4 @@ Comparando os dois hello worlds rodando o MESMO modelo (GLM-5.2) com a MESMA per
 - ⏳ Dia 4 — Análise comparativa + repetição estatística do experimento de tokens
 - ⏳ Dia 5 — Rascunho do post LinkedIn
 
-**Commit do fechamento:** (preencher após push)
+**Commit do fechamento:** `9ffe83d`
