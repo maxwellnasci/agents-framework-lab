@@ -17,8 +17,9 @@ POSTURA DE SEGURANÇA (mesma de hello_openrouter.py):
   - Mensagem genérica, sem dado sensível
   - Tratamento de exceções sem vazar credenciais em stack trace
 
-ABORDAGEM OPENROUTER USADA: <PREENCHER: A ou B>
-  (A = OpenRouterProvider nativo; B = OpenAIProvider com base_url)
+ABORDAGEM OPENROUTER USADA: A (OpenRouterProvider nativo)
+  Confirmada em runtime com pydantic-ai==2.0.0
+  Abordagem B (OpenAIProvider com base_url) mantida como fallback
 """
 
 import os
@@ -94,10 +95,12 @@ try:
     # result.usage() retorna estatísticas de uso (tokens, custo).
     # Diferente do hello_openrouter.py, o Pydantic AI já agrega isso
     # automaticamente em um objeto Usage.
-    usage = result.usage()
+    # Pydantic AI 2.0 mudou usage de método pra propriedade
+    # (antes era result.usage(), agora result.usage). Breaking change da v2.0.
+    usage = result.usage
     print(f"📊 Tokens — input: {usage.input_tokens} | output: {usage.output_tokens} | total: {usage.total_tokens}")
 
-    # Estimativa de custo igual ao hello_openrouter.py (GLM-5.2 pricing):
+    # Estimativa de custo (GLM-5.2 no OpenRouter):
     # Input: $1.40/M tokens | Output: $4.40/M tokens
     if usage.input_tokens and usage.output_tokens:
         cost = (usage.input_tokens * 1.40 + usage.output_tokens * 4.40) / 1_000_000

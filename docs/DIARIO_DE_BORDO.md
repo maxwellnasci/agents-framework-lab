@@ -59,3 +59,30 @@ Este arquivo documenta o progresso, aprendizados e decisões técnicas do labora
 **Commit:** `e1dc42a`
 
 **Próximo passo:** Max roda `python 01-pydantic-ai/hello_pydantic.py` manualmente e reporta o output. Depois seguimos pro Dia 2 (weather_agent.py com tool use real).
+
+### Bug encontrado e fix aplicado (Dia 1)
+
+**Sintoma:** após GLM-5.2 responder corretamente, o script quebrava com:
+```
+❌ Falha na chamada: TypeError
+   Mensagem: 'RunUsage' object is not callable
+```
+
+**Causa raiz:** Pydantic AI 2.0 mudou `result.usage` de método para propriedade (breaking change vs v1.85). O código original chamava com parênteses (`result.usage()`) como se fosse função.
+
+**Fix:** remover os parênteses — `usage = result.usage`.
+
+**API verificada via `help(RunUsage)` — atributos confirmados na v2.0.0:**
+- `input_tokens` ✅ (mesmo nome)
+- `output_tokens` ✅ (mesmo nome)
+- `total_tokens` ✅ (propriedade calculada: input + output)
+- Bônus descoberto: também tem `cache_read_tokens`, `requests`, `tool_calls`
+
+**Aprendizado pro lab:**
+1. Sempre verificar versão exata da biblioteca antes de seguir tutorial antigo
+2. `TypeError: X object is not callable` = tentamos chamar como função algo que não é
+3. Major releases (1.x → 2.0) frequentemente movem métodos pra propriedades. Ler CHANGELOG é parte do trabalho de cibersec (mudança de API pode esconder mudança de comportamento de segurança)
+
+**Versão confirmada:** pydantic-ai 2.0.0
+**Abordagem OpenRouter confirmada:** A (OpenRouterProvider nativo) — suporte maduro
+**Commit do fix:** (preencher após push)
