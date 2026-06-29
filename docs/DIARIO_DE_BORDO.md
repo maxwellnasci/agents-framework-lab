@@ -85,4 +85,4 @@ Este arquivo documenta o progresso, aprendizados e decisões técnicas do labora
 
 **Versão confirmada:** pydantic-ai 2.0.0
 **Abordagem OpenRouter confirmada:** A (OpenRouterProvider nativo) — suporte maduro
-**Commit do fix:** (preencher após push)
+**Commit do fix:** `87f9936`
