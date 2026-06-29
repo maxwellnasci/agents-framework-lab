@@ -32,3 +32,30 @@ Este arquivo documenta o progresso, aprendizados e decisões técnicas do labora
 
 ### Próximos Passos (Para a próxima sessão)
 - Iniciar a **Semana 1 — Pydantic AI**: O objetivo será construir o primeiro framework utilizando o modelo GLM-5.2 (reaproveitando o cliente criado na Fase 1) para desenvolver o agente climático integrado à API.
+
+---
+
+## Fase 2 — Semana 1: Pydantic AI
+
+### Dia 1 — Hello World (data: 2026-06-29)
+
+**Objetivo:** primeira chamada via Pydantic AI, comparável ao `shared/hello_openrouter.py`.
+
+**Entregue:**
+- `01-pydantic-ai/hello_pydantic.py` — hello world com comentários didáticos
+- `01-pydantic-ai/README.md` — atualizado com plano da semana
+- `shared/requirements.txt` — atualizado com `pydantic-ai>=1.0.0`
+
+**Versão instalada:** pydantic-ai `2.0.0`
+
+**Abordagem OpenRouter usada:** Tenta A (OpenRouterProvider nativo) com fallback automático pra B (OpenAIProvider + base_url). Qual funcionou será confirmado pelo Max após rodar o script.
+
+**O que o Pydantic AI adiciona vs hello_openrouter.py:**
+- Não é preciso montar dicionário `{"role": "user", "content": ...}` manualmente
+- O `Agent` encapsula modelo + instruções + tools em um objeto único e reutilizável
+- Retorno tipado (`result.output`) em vez de dicionário JSON cru
+- Validação Pydantic automática em background
+
+**Commit:** (preencher após push)
+
+**Próximo passo:** Max roda `python 01-pydantic-ai/hello_pydantic.py` manualmente e reporta o output. Depois seguimos pro Dia 2 (weather_agent.py com tool use real).
