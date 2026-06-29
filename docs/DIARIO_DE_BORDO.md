@@ -56,6 +56,6 @@ Este arquivo documenta o progresso, aprendizados e decisões técnicas do labora
 - Retorno tipado (`result.output`) em vez de dicionário JSON cru
 - Validação Pydantic automática em background
 
-**Commit:** (preencher após push)
+**Commit:** `e1dc42a`
 
 **Próximo passo:** Max roda `python 01-pydantic-ai/hello_pydantic.py` manualmente e reporta o output. Depois seguimos pro Dia 2 (weather_agent.py com tool use real).
