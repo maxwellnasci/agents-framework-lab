@@ -86,3 +86,52 @@ Este arquivo documenta o progresso, aprendizados e decisões técnicas do labora
 **Versão confirmada:** pydantic-ai 2.0.0
 **Abordagem OpenRouter confirmada:** A (OpenRouterProvider nativo) — suporte maduro
 **Commit do fix:** `87f9936`
+
+### Run final pós-fix (Dia 1 fechado)
+
+**Comando executado:**
+```bash
+source venv/bin/activate
+python 01-pydantic-ai/hello_pydantic.py
+```
+
+**Output:**
+```
+🔗 Framework:  Pydantic AI
+🛰️  Abordagem: A (OpenRouterProvider nativo)
+🤖 Modelo:     z-ai/glm-5.2
+💬 Pergunta:   'Olá! Em uma frase, quem é você?'
+
+✅ Resposta:
+   Sou um assistente de inteligência artificial criado para responder
+   às suas perguntas e ajudar em suas tarefas do dia a dia.
+
+📊 Tokens — input: 50 | output: 282 | total: 332
+💰 Custo estimado: $0.001311 USD
+```
+
+**Status:** ✅ Dia 1 oficialmente fechado.
+
+### Observação técnica (material pro post da Semana 1)
+
+Comparando os dois hello worlds rodando o MESMO modelo (GLM-5.2) com a MESMA pergunta:
+
+| Métrica | `shared/hello_openrouter.py` (raw API) | `01-pydantic-ai/hello_pydantic.py` (framework) | Delta |
+|---|---|---|---|
+| Tokens input | 23 | 50 | +27 (instructions mais estruturadas) |
+| Tokens output (inclui reasoning) | 394 | 282 | -112 (~28% menor) |
+| Custo total | $0.001682 | $0.001311 | -$0.000371 (~22% menor) |
+
+**Hipótese inicial (a verificar nos próximos dias):** Pydantic AI estrutura o system prompt de forma que reduz tokens de raciocínio em modelos reasoning como GLM-5.2. Pode ser por: (a) instructions mais claras, (b) framing mais determinístico do output esperado, (c) random run-to-run variance.
+
+**Próximo passo:** repetir o experimento N=10 cada lado no Dia 4 (análise) pra ver se a economia é estatisticamente consistente ou ruído. Se for consistente, vira gráfico do post LinkedIn da Semana 1.
+
+### Status geral
+
+- ✅ Dia 1 — Hello world Pydantic AI (FECHADO)
+- ⏳ Dia 2 — `weather_agent.py` com tool use (Open-Meteo API)
+- ⏳ Dia 3 — `secure_agent.py` com Human-in-the-Loop tool approval
+- ⏳ Dia 4 — Análise comparativa + repetição estatística do experimento de tokens
+- ⏳ Dia 5 — Rascunho do post LinkedIn
+
+**Commit do fechamento:** (preencher após push)
