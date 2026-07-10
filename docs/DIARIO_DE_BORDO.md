@@ -135,3 +135,99 @@ Comparando os dois hello worlds rodando o MESMO modelo (GLM-5.2) com a MESMA per
 - ⏳ Dia 5 — Rascunho do post LinkedIn
 
 **Commit do fechamento:** `9ffe83d`
+
+---
+
+### Dia 2 — 09/07/2026 — Tool use + backend local (Ollama/Nemotron)
+
+#### Parte A — Infraestrutura local: Ollama + Nemotron-3-Nano 4B
+
+**O que foi feito:**
+- Instalado **Ollama 0.31.2** no Kali Linux via script oficial. Instalador detectou GPU NVIDIA, mas inferência roda 100% CPU (GTX de 4GB não utilizada pelo runtime).
+- Baixado modelo **`nemotron-3-nano:4b`** (NVIDIA Nemotron 3 Nano, 3.97B parâmetros, quantização Q4_K_M, 2,8 GB de download, licença NVIDIA Open Model License).
+- ⚠️ **Pegadinha de registry:** `ollama pull nemotron-nano` retorna "file does not exist". Nome correto: `nemotron-3-nano:4b`. A tag `latest` puxaria a versão 30B (24 GB) — sempre especificar `:4b`.
+
+**Medições via `ollama ps`:**
+- RAM em uso: ~3,1 GB
+- CPU: 100% durante inferência
+- Contexto padrão: 4096 tokens (suporta 256K, mas Ollama limita por padrão)
+- O modelo é de **reasoning**: exibe cadeia de pensamento antes da resposta (em inglês), mas responde em português correto.
+
+**Motivação estratégica:** validar que agentes rodam em hardware corporativo comum (alvo: notebook i5 12ª gen, 16 GB RAM, sem GPU útil) — pilar da tese de soberania de dados e LGPD do lab.
+
+---
+
+#### Parte B — `weather_agent.py` (Dia 2 do plano original)
+
+**Arquivo criado:** `01-pydantic-ai/weather_agent.py` (~2,3 KB)
+
+**O que faz:** agente Pydantic AI com tool use via API Open-Meteo (geocoding + forecast, sem API key). Recurso central: **dual-backend por variável de ambiente** — `AGENT_BACKEND=openrouter` (padrão, GLM-5.2 na nuvem) ou `AGENT_BACKEND=local` (Nemotron via Ollama em `http://localhost:11434/v1`, usando `OpenAIProvider` com `base_url` custom). **Zero mudança de código entre backends.**
+
+**Frase-tese validada:**
+> "Mesmo código, mesmo agente — trocando uma variável de ambiente, o cérebro sai da nuvem e roda dentro da máquina."
+> (pilar central do argumento de soberania de dados/LGPD do lab)
+
+**Detalhes de implementação (aplicando lições do Dia 1):**
+- `model_settings={"max_tokens": 2048}` — modelos de reasoning consomem tokens pensando; limite baixo mata a resposta (lição do Dia 1 com GLM-5.2).
+- `result.usage` SEM parênteses — Pydantic AI 2.0 mudou de método para property (fix documentado no Dia 1).
+- Ferramenta registrada com `@agent.tool_plain`; system prompt força uso da ferramenta e resposta em pt-BR.
+
+**Commit:** `5013d0a`
+
+---
+
+#### Parte C — Resultados dos testes
+
+Ambos funcionaram de primeira.
+
+**Teste 1 — nuvem (GLM-5.2 via OpenRouter):**
+```
+Pergunta: "Qual o clima agora em Curitiba?"
+Resposta: correta, dados reais (12,2°C, vento 5,9 km/h, umidade 61%), estilo florido com emojis
+RunUsage(input_tokens=546, cache_read_tokens=419, output_tokens=131,
+         reasoning_tokens=41, requests=2, tool_calls=1)
+```
+
+**Teste 2 — local (Nemotron 4B via Ollama, 100% CPU):**
+```
+Comando: AGENT_BACKEND=local python weather_agent.py "Qual o clima agora em Curitiba?"
+Resposta: correta, mesmos dados (12°C, 5,9 km/h, 61%), estilo seco e direto
+RunUsage(input_tokens=871, output_tokens=109, requests=2, tool_calls=1)
+```
+
+**Tabela comparativa nuvem vs. local:**
+
+| Métrica | GLM-5.2 (nuvem) | Nemotron 4B (local/CPU) |
+|---|---|---|
+| `tool_calls` | 1 ✓ | 1 ✓ |
+| `requests` | 2 | 2 |
+| `input_tokens` | 546 (+419 de cache) | 871 (sem cache no Ollama) |
+| `output_tokens` | 131 | 109 |
+| Custo | centavos (USD) | R$ 0,00 |
+| Localização dos dados | nuvem exterior | máquina local |
+
+**Observações técnicas:**
+- `requests=2` expõe a anatomia do tool calling: 1ª requisição decide chamar a ferramenta, 2ª formula a resposta com o resultado.
+- Os campos do `RunUsage` variam por provedor: OpenRouter expõe `cache_read_tokens` e `reasoning_tokens`, Ollama não. Insight relevante para observabilidade multi-provedor.
+- O "offline" vale para o **cérebro (LLM)**; a ferramenta Open-Meteo ainda usa internet. Teste 100% offline com tool local fica como experimento futuro.
+
+---
+
+#### Parte D — Bugs e lições do dia
+
+1. **Lição conceitual central:** "modelo ≠ agente — inteligência é o cérebro, ferramentas são as mãos." Descoberta na prática: comandos de shell foram digitados por engano dentro do chat do `ollama run` e o modelo respondeu corretamente que não executa nada. A frustração inicial ("queria um agente mais inteligente") diagnosticava errado — faltavam ferramentas, não inteligência. O `weather_agent` provou isso: mesmo modelo, com tool, executa.
+2. **Bug de ambiente:** `ModuleNotFoundError: pydantic_ai` — `venv` não estava ativado. Agravante: o venv se chama `venv` (sem ponto) e a primeira tentativa de ativação usou `.venv` (com ponto). Fix: `source ../venv/bin/activate`.
+3. **Bug de caminho:** o repositório fica em pasta com espaços no nome (`Documentos/Kali Linux/Multi-Agentes/`), exigindo aspas em todos os comandos de shell. Anotado como melhoria futura: mover para caminho sem espaços.
+4. **Pegadinha de registry do Ollama:** `ollama pull nemotron-nano` falha (file does not exist); nome correto é `nemotron-3-nano:4b`, e a tag default puxaria 24 GB.
+
+---
+
+#### Status geral atualizado
+
+- ✅ Dia 1 — Hello world Pydantic AI (FECHADO)
+- ✅ Dia 2 — `weather_agent.py` com tool use dual-backend (FECHADO)
+- ⏳ Dia 3 — `secure_agent.py` com Human-in-the-Loop tool approval
+- ⏳ Dia 4 — Análise comparativa + repetição estatística do experimento de tokens
+- ⏳ Dia 5 — Rascunho do post LinkedIn
+
+**Commit Dia 2:** `5013d0a`
