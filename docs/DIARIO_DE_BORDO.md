@@ -231,3 +231,29 @@ RunUsage(input_tokens=871, output_tokens=109, requests=2, tool_calls=1)
 - ⏳ Dia 5 — Rascunho do post LinkedIn
 
 **Commit Dia 2:** `5013d0a`
+
+---
+
+### Dia 3 — `secure_agent.py` — Human-in-the-Loop
+
+**O que foi feito:**
+Implementado o `secure_agent.py`, demonstrando o padrão de "Human-in-the-Loop" para controle de segurança em agentes de IA.
+
+**Detalhes da implementação:**
+- **Ferramentas seguras:** `listar_arquivos` e `ler_arquivo`. Executam diretamente sem interrupções.
+- **Ferramentas sensíveis:** `criar_arquivo` e `apagar_arquivo`. Pausam a execução e pedem aprovação via `input()` no terminal antes de prosseguir.
+
+**Testes realizados:**
+1. Ação segura (`listar_arquivos`): Executou diretamente com sucesso sem pedir aprovação.
+2. Ação sensível APROVADA: Pedido para criar arquivo (`criar_arquivo`). O agente pausou, pediu aprovação. O usuário digitou "s". O arquivo foi criado com sucesso.
+3. Ação sensível NEGADA: Pedido para apagar arquivo (`apagar_arquivo`). O agente pausou. O usuário digitou "n". A recusa foi respeitada pelo agente, e o arquivo **não** foi apagado. Isso confirma que o controle humano funciona efetivamente como um guardrail.
+
+**Status geral atualizado:**
+
+- ✅ Dia 1 — Hello world Pydantic AI (FECHADO)
+- ✅ Dia 2 — `weather_agent.py` com tool use dual-backend (FECHADO)
+- ✅ Dia 3 — `secure_agent.py` com Human-in-the-Loop tool approval (FECHADO)
+- ⏳ Dia 4 — Análise comparativa + repetição estatística do experimento de tokens
+- ⏳ Dia 5 — Rascunho do post LinkedIn
+
+**Commit Dia 3:** `f34b87f`
